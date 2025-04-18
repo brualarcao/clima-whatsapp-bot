@@ -1,0 +1,22 @@
+name: Clima Diário
+
+on:
+  schedule:
+    - cron: '10 15 * * *'  # Executa às 12:10 (Brasília é UTC-3)
+  workflow_dispatch:
+
+jobs:
+  clima-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Executar script
+        env:
+          OWM_API_KEY: ${{ secrets.OWM_API_KEY }}
+          WHATSAPP_TOKEN: ${{ secrets.WHATSAPP_TOKEN }}
+        run: python script.py

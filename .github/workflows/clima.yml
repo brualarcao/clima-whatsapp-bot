@@ -2,7 +2,7 @@ name: Clima Diário
 
 on:
   schedule:
-    - cron: '10 15 * * *'  # Executa às 12:10 (Brasília é UTC-3)
+    - cron: '0 13 * * *'  # Executa às 10:00 (Brasília é UTC-3)
   workflow_dispatch:
 
 jobs:

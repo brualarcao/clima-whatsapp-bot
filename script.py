@@ -1,15 +1,18 @@
 import requests
 from datetime import datetime
 import os
+from twilio.rest import Client
 
-# Variáveis de ambiente
 API_KEY = os.getenv("OWM_API_KEY")
 LAT = "-23.0264"
 LON = "-45.5553"
 UNITS = "metric"
 LANG = "pt_br"
-WHATSAPP_NUMBER = "5512991302647"
-TOKEN = os.getenv("WHATSAPP_TOKEN")
+
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_FROM = "whatsapp:+14155238886"
+TWILIO_TO = "whatsapp:+5512991302647"
 
 DIAS_SEMANA = {
     "Monday": "Segunda-Feira",
@@ -46,12 +49,14 @@ def enviar_mensagem(temp_min, temp_max):
         "\nTenha uma ótima tarde! 😊\nAmo você b, ♥️"
     )
 
-    url = f"https://api.callmebot.com/whatsapp.php?phone={WHATSAPP_NUMBER}&text={requests.utils.quote(mensagem)}&apikey={TOKEN}"
-    resposta = requests.get(url)
-    if resposta.status_code == 200:
-        print("Mensagem enviada com sucesso.")
-    else:
-        print(f"Erro ao enviar mensagem: {resposta.text}")
+    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    message = client.messages.create(
+        from_=TWILIO_FROM,
+        to=TWILIO_TO,
+        body=mensagem
+    )
+
+    print(f"Mensagem enviada com sucesso. SID: {message.sid}")
 
 def main():
     try:

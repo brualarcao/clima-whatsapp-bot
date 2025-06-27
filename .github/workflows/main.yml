@@ -1,0 +1,23 @@
+name: Clima Diário v2
+
+on:
+  schedule:
+    - cron: '0 13 * * *'  # Executa às 10:00 (Brasília é UTC-3)
+  workflow_dispatch:
+
+jobs:
+  clima-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Executar script
+        env:
+          OWM_API_KEY: ${{ secrets.OWM_API_KEY }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+        run: python script.py

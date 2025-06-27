@@ -1,18 +1,21 @@
-import requests
-from datetime import datetime
+import smtplib
 import os
-from twilio.rest import Client
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+import requests
 
+# Configurações
 API_KEY = os.getenv("OWM_API_KEY")
 LAT = "-23.0264"
 LON = "-45.5553"
 UNITS = "metric"
 LANG = "pt_br"
 
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_FROM = "whatsapp:+17622526779"
-TWILIO_TO = "whatsapp:+5512991302647"
+# E-mail
+EMAIL_FROM = os.getenv("EMAIL_FROM")
+EMAIL_TO = os.getenv("EMAIL_TO")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 DIAS_SEMANA = {
     "Monday": "Segunda-Feira",
@@ -34,34 +37,51 @@ def obter_temperaturas():
     else:
         raise Exception(f"Erro na API: {resposta.status_code} - {resposta.text}")
 
-def enviar_mensagem(temp_min, temp_max):
+def enviar_email(temp_min, temp_max):
     hoje = datetime.now()
     data = hoje.strftime("%d/%m/%Y")
     dia_semana = DIAS_SEMANA.get(hoje.strftime("%A"), hoje.strftime("%A"))
     temp_media = (temp_min + temp_max) / 2
 
-    mensagem = (
-        f"📅 *Data*: {data}\n"
-        f"📆 *Dia da Semana*: {dia_semana}\n"
-        f"🌡️ *Temp. Mínima*: {temp_min:.2f}°C\n"
-        f"🌡️ *Temp. Máxima*: {temp_max:.2f}°C\n"
-        f"🌡️ *Temp. Média*: {temp_media:.2f}°C\n"
-        "\nTenha uma ótima tarde! 😊\nAmo você b, ♥️"
-    )
+    assunto = f"☁️ Clima do dia - {data}"
 
-    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    message = client.messages.create(
-        from_=TWILIO_FROM,
-        to=TWILIO_TO,
-        body=mensagem
-    )
+    corpo_html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px;">
+        <div style="max-width: 500px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+          <h2 style="color: #1e90ff; text-align: center;">🌤️ Previsão do Dia</h2>
+          <p><strong>📅 Data:</strong> {data}</p>
+          <p><strong>📆 Dia da Semana:</strong> {dia_semana}</p>
+          <hr style="border: none; border-top: 1px solid #eee;">
+          <p><strong>🌡️ Temperatura Mínima:</strong> {temp_min:.2f}°C</p>
+          <p><strong>🌡️ Temperatura Máxima:</strong> {temp_max:.2f}°C</p>
+          <p><strong>🌡️ Temperatura Média:</strong> {temp_media:.2f}°C</p>
+          <hr style="border: none; border-top: 1px solid #eee;">
+          <p style="font-style: italic; color: #555;">Tenha uma ótima tarde! 😊</p>
+          <p style="text-align: right; font-weight: bold; color: #c62828;">♥️ Amo você, b.</p>
+        </div>
+      </body>
+    </html>
+    """
 
-    print(f"Mensagem enviada com sucesso. SID: {message.sid}")
+    msg = MIMEMultipart("alternative")
+    msg["From"] = EMAIL_FROM
+    msg["To"] = EMAIL_TO
+    msg["Subject"] = assunto
+    msg.attach(MIMEText(corpo_html, "html"))
+
+    # Enviar e-mail via SMTP
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(EMAIL_FROM, EMAIL_PASSWORD)
+        server.send_message(msg)
+
+    print("E-mail enviado com sucesso.")
+
 
 def main():
     try:
         temp_min, temp_max = obter_temperaturas()
-        enviar_mensagem(temp_min, temp_max)
+        enviar_email(temp_min, temp_max)
     except Exception as e:
         print(f"Erro: {e}")
 
